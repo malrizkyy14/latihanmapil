@@ -5,13 +5,42 @@ import mysql from "mysql2/promise";
 import type { RowDataPacket } from "mysql2";
 
 // ---------- Koneksi MySQL (pakai .env.local) ----------
-const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
+let db: mysql.Pool | undefined;
+
+function getDb() {
+  const host = process.env.DB_HOST?.trim();
+  const portValue = process.env.DB_PORT?.trim();
+  const user = process.env.DB_USER?.trim();
+  const password = process.env.DB_PASSWORD;
+  const database = process.env.DB_NAME?.trim();
+  const port = Number(portValue);
+  const missing = [
+    !host && "DB_HOST",
+    !portValue && "DB_PORT",
+    !user && "DB_USER",
+    password === undefined && "DB_PASSWORD",
+    !database && "DB_NAME",
+  ].filter(Boolean);
+
+  if (missing.length > 0) {
+    throw new Error(`Environment variable database belum diatur: ${missing.join(", ")}`);
+  }
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("DB_PORT harus berupa angka antara 1 dan 65535.");
+  }
+
+  if (!db) {
+    db = mysql.createPool({
+      host,
+      port,
+      user,
+      password,
+      database,
+    });
+  }
+
+  return db;
+}
 
 type Siswa = RowDataPacket & {
   id: number;
@@ -33,12 +62,12 @@ async function simpan(formData: FormData) {
   let pesan = "";
   try {
     if (id) {
-      await db.query(
+      await getDb().query(
         "UPDATE siswa SET nama = ?, kelas = ?, jurusan = ? WHERE id = ?",
         [nama, kelas, jurusan, id]
       );
     } else {
-      await db.query(
+      await getDb().query(
         "INSERT INTO siswa (nama, kelas, jurusan) VALUES (?, ?, ?)",
         [nama, kelas, jurusan]
       );
@@ -56,7 +85,7 @@ async function hapus(formData: FormData) {
   "use server";
   let pesan = "";
   try {
-    await db.query("DELETE FROM siswa WHERE id = ?", [formData.get("id")]);
+    await getDb().query("DELETE FROM siswa WHERE id = ?", [formData.get("id")]);
   } catch (e) {
     pesan = (e as Error).message;
   }
@@ -79,7 +108,7 @@ export default async function Home({
   let siswa: Siswa[] = [];
   let error = params.error ?? "";
   try {
-    const [rows] = await db.query<Siswa[]>("SELECT * FROM siswa ORDER BY id");
+    const [rows] = await getDb().query<Siswa[]>("SELECT * FROM siswa ORDER BY id");
     siswa = rows;
   } catch (e) {
     error = (e as Error).message;
