@@ -30,7 +30,7 @@ Di **Vercel → Project → Settings → Environment Variables**, tambahkan:
 - `DB_USER`: username database
 - `DB_PASSWORD`: password database
 - `DB_NAME`: nama database
-- `DB_SSL_CA`: isi CA certificate Aiven (PEM) agar sertifikat TLS diverifikasi
+- `DB_SSL_CA`: isi CA certificate Aiven (PEM) agar sertifikat TLS diverifikasi (wajib di Vercel)
 - `AUTH_SECRET`: rahasia acak minimal 32 karakter untuk sesi login
 
-Di Aiven, gunakan database yang ditampilkan pada halaman service (sering kali `defaultdb`). Pilih database tersebut di MySQL Workbench, lalu jalankan [database-aiven.sql](./database-aiven.sql). Buat akun memakai `npm run create-user` setelah `.env.local` diisi dengan koneksi Aiven, termasuk `DB_SSL_CA`. Masukkan variabel yang sama di Vercel → **Project → Settings → Environment Variables**, dengan password yang baru dirotasi, lalu redeploy. Jangan commit `.env` atau `.env.local`.
+Untuk lokal, unduh CA certificate dari halaman service Aiven ke `.certs/ca.pem`; `DB_SSL_CA_FILE=.certs/ca.pem` akan memakainya tanpa memasukkan sertifikat ke Git. Di Vercel, isi `DB_SSL_CA` dengan seluruh isi PEM certificate (jangan set `DB_SSL_CA_FILE`). Di Aiven, gunakan database yang ditampilkan pada halaman service (sering kali `defaultdb`). Pilih database tersebut di MySQL Workbench, lalu jalankan [database-aiven.sql](./database-aiven.sql). Buat akun memakai `npm run create-user` setelah `.env.local` diisi dengan koneksi Aiven dan CA certificate. Masukkan variabel yang sama di Vercel → **Project → Settings → Environment Variables**, dengan password yang baru dirotasi, lalu redeploy. Jangan commit `.env`, `.env.local`, atau CA files.

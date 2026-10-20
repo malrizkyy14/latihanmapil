@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { randomBytes, scrypt as scryptCallback } from "node:crypto";
 import { promisify } from "node:util";
 import { createInterface } from "node:readline";
@@ -61,7 +63,9 @@ try {
   const portValue = process.env.DB_PORT?.trim();
   const user = process.env.DB_USER?.trim();
   const database = process.env.DB_NAME?.trim();
-  const sslCa = process.env.DB_SSL_CA?.replace(/\\n/g, "\n").trim();
+  const inlineCa = process.env.DB_SSL_CA?.replace(/\\n/g, "\n").trim();
+  const caFile = process.env.DB_SSL_CA_FILE?.trim();
+  const sslCa = inlineCa || (caFile ? readFileSync(resolve(process.cwd(), caFile), "utf8") : "");
   const port = Number(portValue);
   if (!host || !portValue || !user || process.env.DB_PASSWORD === undefined || !database) {
     throw new Error("Atur DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, dan DB_NAME terlebih dahulu.");

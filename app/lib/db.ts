@@ -1,6 +1,16 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import mysql from "mysql2/promise";
 
 let db: mysql.Pool | undefined;
+
+function getSslCa() {
+  const ca = process.env.DB_SSL_CA?.replace(/\\n/g, "\n").trim();
+  if (ca) return ca;
+
+  const caFile = process.env.DB_SSL_CA_FILE?.trim();
+  return caFile ? readFileSync(resolve(process.cwd(), caFile), "utf8") : "";
+}
 
 export function getDb() {
   const host = process.env.DB_HOST?.trim();
@@ -8,7 +18,7 @@ export function getDb() {
   const user = process.env.DB_USER?.trim();
   const password = process.env.DB_PASSWORD;
   const database = process.env.DB_NAME?.trim();
-  const sslCa = process.env.DB_SSL_CA?.replace(/\\n/g, "\n").trim();
+  const sslCa = getSslCa();
   const port = Number(portValue);
   const missing = [
     !host && "DB_HOST",
@@ -16,7 +26,10 @@ export function getDb() {
     !user && "DB_USER",
     password === undefined && "DB_PASSWORD",
     !database && "DB_NAME",
-    host?.endsWith(".aivencloud.com") && !sslCa && "DB_SSL_CA (CA certificate Aiven)",
+    host?.endsWith(".aivencloud.com") &&
+      !sslCa &&
+      !process.env.DB_SSL_CA_FILE?.trim() &&
+      "DB_SSL_CA (CA certificate Aiven)",
   ].filter(Boolean);
 
   if (missing.length > 0) {
