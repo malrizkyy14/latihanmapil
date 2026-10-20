@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 ## Deploy ke Vercel
 
-Vercel tidak dapat mengakses MySQL yang berjalan di komputer lokal. Siapkan database MySQL yang dapat diakses dari internet atau dari jaringan Vercel, lalu impor `database.sql` ke database tersebut.
+Vercel tidak dapat mengakses MySQL yang berjalan di komputer lokal. Untuk Aiven, ambil hostname, port, user, password baru, dan CA certificate dari halaman service Aiven. Jangan gunakan `localhost`, dan jangan tempel URI koneksi lengkap ke source code.
 
 Di **Vercel → Project → Settings → Environment Variables**, tambahkan:
 
@@ -30,6 +30,7 @@ Di **Vercel → Project → Settings → Environment Variables**, tambahkan:
 - `DB_USER`: username database
 - `DB_PASSWORD`: password database
 - `DB_NAME`: nama database
+- `DB_SSL_CA`: isi CA certificate Aiven (PEM) agar sertifikat TLS diverifikasi
 - `AUTH_SECRET`: rahasia acak minimal 32 karakter untuk sesi login
 
-Pastikan tabel `users` dari `database.sql` sudah dibuat di database production. Buat akun pengguna dengan `npm run create-user` memakai `.env.local` yang terhubung ke database production. Jangan commit `.env` atau `.env.local`; gunakan Environment Variables Vercel untuk kredensial produksi. Atur variabel tersebut untuk environment yang digunakan, kemudian deploy ulang project.
+Di Aiven, gunakan database yang ditampilkan pada halaman service (sering kali `defaultdb`). Pilih database tersebut di MySQL Workbench, lalu jalankan [database-aiven.sql](./database-aiven.sql). Buat akun memakai `npm run create-user` setelah `.env.local` diisi dengan koneksi Aiven, termasuk `DB_SSL_CA`. Masukkan variabel yang sama di Vercel → **Project → Settings → Environment Variables**, dengan password yang baru dirotasi, lalu redeploy. Jangan commit `.env` atau `.env.local`.

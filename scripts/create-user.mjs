@@ -61,9 +61,13 @@ try {
   const portValue = process.env.DB_PORT?.trim();
   const user = process.env.DB_USER?.trim();
   const database = process.env.DB_NAME?.trim();
+  const sslCa = process.env.DB_SSL_CA?.replace(/\\n/g, "\n").trim();
   const port = Number(portValue);
   if (!host || !portValue || !user || process.env.DB_PASSWORD === undefined || !database) {
     throw new Error("Atur DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, dan DB_NAME terlebih dahulu.");
+  }
+  if (host.endsWith(".aivencloud.com") && !sslCa) {
+    throw new Error("Atur DB_SSL_CA dengan CA certificate Aiven agar koneksi TLS dapat diverifikasi.");
   }
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error("DB_PORT harus berupa angka antara 1 dan 65535.");
@@ -73,7 +77,14 @@ try {
   const hash = await scrypt(password, salt, 64);
   const passwordHash = `scrypt$${salt.toString("hex")}$${hash.toString("hex")}`;
 
-  connection = await mysql.createConnection({ host, port, user, password: process.env.DB_PASSWORD, database });
+  connection = await mysql.createConnection({
+    host,
+    port,
+    user,
+    password: process.env.DB_PASSWORD,
+    database,
+    ...(sslCa ? { ssl: { ca: sslCa, rejectUnauthorized: true } } : {}),
+  });
   await connection.execute(
     "INSERT INTO users (username, password_hash) VALUES (?, ?)",
     [username, passwordHash]

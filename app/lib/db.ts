@@ -8,6 +8,7 @@ export function getDb() {
   const user = process.env.DB_USER?.trim();
   const password = process.env.DB_PASSWORD;
   const database = process.env.DB_NAME?.trim();
+  const sslCa = process.env.DB_SSL_CA?.replace(/\\n/g, "\n").trim();
   const port = Number(portValue);
   const missing = [
     !host && "DB_HOST",
@@ -15,6 +16,7 @@ export function getDb() {
     !user && "DB_USER",
     password === undefined && "DB_PASSWORD",
     !database && "DB_NAME",
+    host?.endsWith(".aivencloud.com") && !sslCa && "DB_SSL_CA (CA certificate Aiven)",
   ].filter(Boolean);
 
   if (missing.length > 0) {
@@ -25,7 +27,14 @@ export function getDb() {
   }
 
   if (!db) {
-    db = mysql.createPool({ host, port, user, password, database });
+    db = mysql.createPool({
+      host,
+      port,
+      user,
+      password,
+      database,
+      ...(sslCa ? { ssl: { ca: sslCa, rejectUnauthorized: true } } : {}),
+    });
   }
 
   return db;
