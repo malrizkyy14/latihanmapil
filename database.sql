@@ -8,6 +8,13 @@ CREATE TABLE IF NOT EXISTS siswa (
   jurusan VARCHAR(50) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password_hash VARCHAR(200) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 INSERT INTO siswa (nama, kelas, jurusan) VALUES
 ('Maulana Rizky', 'XI RPL 1', 'RPL'),
 ('Steven Rizky', 'XI RPL 2', 'RPL');

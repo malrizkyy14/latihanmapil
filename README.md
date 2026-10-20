@@ -3,9 +3,21 @@
 ## Menjalankan secara lokal
 
 1. Import `database.sql` ke MySQL (phpMyAdmin / terminal).
-2. Salin `.env.example` menjadi `.env.local`, lalu sesuaikan nilainya dengan MySQL lokal.
-3. Jalankan `npm install`, lalu `npm run dev`.
-4. Buka http://localhost:3000.
+2. Salin `.env.example` menjadi `.env.local`, lalu sesuaikan nilainya dengan MySQL lokal. Isi `AUTH_SECRET` dengan nilai acak rahasia minimal 32 karakter.
+3. Jalankan `npm install`.
+4. Buat akun dengan `npm run create-user`, lalu ikuti prompt terminal.
+5. Jalankan `npm run dev` dan buka http://localhost:3000.
+
+Halaman daftar siswa dan aksi tambah, edit, serta hapus hanya dapat digunakan setelah login. Tidak ada registrasi publik. Jika database sudah terisi data dan Anda tidak ingin menjalankan ulang seluruh `database.sql`, buat tabel akun dengan:
+
+```sql
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password_hash VARCHAR(200) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
 
 ## Deploy ke Vercel
 
@@ -18,5 +30,6 @@ Di **Vercel → Project → Settings → Environment Variables**, tambahkan:
 - `DB_USER`: username database
 - `DB_PASSWORD`: password database
 - `DB_NAME`: nama database
+- `AUTH_SECRET`: rahasia acak minimal 32 karakter untuk sesi login
 
-Atur variabel tersebut untuk environment yang digunakan, kemudian deploy ulang project. Jangan commit `.env` atau `.env.local`; gunakan Environment Variables Vercel untuk kredensial produksi.
+Pastikan tabel `users` dari `database.sql` sudah dibuat di database production. Buat akun pengguna dengan `npm run create-user` memakai `.env.local` yang terhubung ke database production. Jangan commit `.env` atau `.env.local`; gunakan Environment Variables Vercel untuk kredensial produksi. Atur variabel tersebut untuk environment yang digunakan, kemudian deploy ulang project.

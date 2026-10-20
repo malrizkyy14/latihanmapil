@@ -1,46 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import mysql from "mysql2/promise";
 import type { RowDataPacket } from "mysql2";
-
-// ---------- Koneksi MySQL (pakai .env.local) ----------
-let db: mysql.Pool | undefined;
-
-function getDb() {
-  const host = process.env.DB_HOST?.trim();
-  const portValue = process.env.DB_PORT?.trim();
-  const user = process.env.DB_USER?.trim();
-  const password = process.env.DB_PASSWORD;
-  const database = process.env.DB_NAME?.trim();
-  const port = Number(portValue);
-  const missing = [
-    !host && "DB_HOST",
-    !portValue && "DB_PORT",
-    !user && "DB_USER",
-    password === undefined && "DB_PASSWORD",
-    !database && "DB_NAME",
-  ].filter(Boolean);
-
-  if (missing.length > 0) {
-    throw new Error(`Environment variable database belum diatur: ${missing.join(", ")}`);
-  }
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error("DB_PORT harus berupa angka antara 1 dan 65535.");
-  }
-
-  if (!db) {
-    db = mysql.createPool({
-      host,
-      port,
-      user,
-      password,
-      database,
-    });
-  }
-
-  return db;
-}
+import { logoutAction } from "./actions";
+import { requireSession } from "./lib/auth";
+import { getDb } from "./lib/db";
 
 type Siswa = RowDataPacket & {
   id: number;
@@ -54,6 +18,7 @@ export const dynamic = "force-dynamic";
 // ---------- Create & Update ----------
 async function simpan(formData: FormData) {
   "use server";
+  await requireSession();
   const id = formData.get("id");
   const nama = formData.get("nama");
   const kelas = formData.get("kelas");
@@ -83,6 +48,7 @@ async function simpan(formData: FormData) {
 // ---------- Delete ----------
 async function hapus(formData: FormData) {
   "use server";
+  await requireSession();
   let pesan = "";
   try {
     await getDb().query("DELETE FROM siswa WHERE id = ?", [formData.get("id")]);
@@ -102,6 +68,7 @@ export default async function Home({
 }: {
   searchParams: Promise<{ edit?: string; error?: string }>;
 }) {
+  const currentUser = await requireSession();
   const params = await searchParams;
 
   // ---------- Read ----------
@@ -120,11 +87,21 @@ export default async function Home({
     <div className="min-h-screen bg-slate-100">
       {/* Header */}
       <header className="bg-indigo-600 text-white">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold">Daftar Siswa</h1>
-          <p className="text-indigo-100 text-sm mt-1">
-            Total {siswa.length} siswa
-          </p>
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-6">
+          <div>
+            <h1 className="text-2xl font-bold">Daftar Siswa</h1>
+            <p className="text-indigo-100 text-sm mt-1">
+              Total {siswa.length} siswa
+            </p>
+          </div>
+          <form action={logoutAction}>
+            <span className="mr-3 hidden text-sm text-indigo-100 sm:inline">
+              {currentUser.username}
+            </span>
+            <button className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium transition hover:bg-indigo-700">
+              Keluar
+            </button>
+          </form>
         </div>
       </header>
 

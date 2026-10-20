@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "create-user": "node scripts/create-user.mjs"
   },
   "dependencies": {
     "mysql2": "^3.11.0",
